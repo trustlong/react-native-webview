@@ -540,41 +540,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     if (mAllowsFullscreenVideo) {
       mWebChromeClient = new RNCWebChromeClient(reactContext, webView) {
 
-      // Fix WebRTC permission request error.
-      @Override
-      public void onPermissionRequest(final PermissionRequest request) {
-          String[] requestedResources = request.getResources();
-          ArrayList<String> permissions = new ArrayList<>();
-          ArrayList<String> grantedPermissions = new ArrayList<String>();
-          for (int i = 0; i < requestedResources.length; i++) {
-            if (requestedResources[i].equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
-              permissions.add(Manifest.permission.RECORD_AUDIO);
-            } else if (requestedResources[i].equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
-              permissions.add(Manifest.permission.CAMERA);
-            }
-            // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
-          }
-
-          for (int i = 0; i < permissions.size(); i++) {
-            if (ContextCompat.checkSelfPermission(reactContext, permissions.get(i)) != PackageManager.PERMISSION_GRANTED) {
-              continue;
-            }
-            if (permissions.get(i).equals(Manifest.permission.RECORD_AUDIO)) {
-              grantedPermissions.add(PermissionRequest.RESOURCE_AUDIO_CAPTURE);
-            } else if (permissions.get(i).equals(Manifest.permission.CAMERA)) {
-              grantedPermissions.add(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
-            }
-          }
-
-          if (grantedPermissions.isEmpty()) {
-            request.deny();
-          } else {
-            String[] grantedPermissionsArray = new String[grantedPermissions.size()];
-            grantedPermissionsArray = grantedPermissions.toArray(grantedPermissionsArray);
-            request.grant(grantedPermissionsArray);
-          }
-        }
-
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
           if (mVideoView != null) {
@@ -757,6 +722,41 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       }
       // Ignore console logs in non debug builds.
       return true;
+    }
+
+    // Fix WebRTC permission request error.
+    @Override
+    public void onPermissionRequest(final PermissionRequest request) {
+      String[] requestedResources = request.getResources();
+      ArrayList<String> permissions = new ArrayList<>();
+      ArrayList<String> grantedPermissions = new ArrayList<String>();
+      for (int i = 0; i < requestedResources.length; i++) {
+        if (requestedResources[i].equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+          permissions.add(Manifest.permission.RECORD_AUDIO);
+        } else if (requestedResources[i].equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+          permissions.add(Manifest.permission.CAMERA);
+        }
+        // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
+      }
+
+      for (int i = 0; i < permissions.size(); i++) {
+        if (ContextCompat.checkSelfPermission(this.mReactContext, permissions.get(i)) != PackageManager.PERMISSION_GRANTED) {
+          continue;
+        }
+        if (permissions.get(i).equals(Manifest.permission.RECORD_AUDIO)) {
+          grantedPermissions.add(PermissionRequest.RESOURCE_AUDIO_CAPTURE);
+        } else if (permissions.get(i).equals(Manifest.permission.CAMERA)) {
+          grantedPermissions.add(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
+        }
+      }
+
+      if (grantedPermissions.isEmpty()) {
+        request.deny();
+      } else {
+        String[] grantedPermissionsArray = new String[grantedPermissions.size()];
+        grantedPermissionsArray = grantedPermissions.toArray(grantedPermissionsArray);
+        request.grant(grantedPermissionsArray);
+      }
     }
 
     @Override
